@@ -8,10 +8,11 @@
 #include <TFT_eSPI.h>
 #include <SPI.h>
 #include <Adafruit_GFX.h>
-#include <STM32Ethernet.h>>
+#include <STM32Ethernet.h>
 #include <EthernetUdp.h>
 #include <EthernetClient.h>
 #include <EthernetServer.h>
+#include <Firebase_ESP_Client.h>
 
 byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
