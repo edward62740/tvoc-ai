@@ -11,6 +11,38 @@
 #include <Firebase_ESP_Client.h>
 #include <stm32f7xx_hal_gpio.h>
 
+#include <Firebase_ESP_Client.h>
+
+// Provide the token generation process info.
+#include <addons/TokenHelper.h>
+
+// Provide the RTDB payload printing info and other helper functions.
+#include <addons/RTDBHelper.h>
+
+/* 2. Install SSLClient library */
+// https://github.com/OPEnSLab-OSU/SSLClient
+#include <SSLClient.h>
+
+/* 3. Create Trus anchors for the server i.e. www.google.com */
+// https://github.com/OPEnSLab-OSU/SSLClient/blob/master/TrustAnchors.md
+// or generate using this site https://openslab-osu.github.io/bearssl-certificate-utility/
+#include "trust_anchors.h"
+
+// For NTP time client
+#include "MB_NTP.h"
+
+// For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
+
+/* 4. Define the API Key */
+#define API_KEY "<redacted>"
+
+/* 5. Define the RTDB URL */
+#define DATABASE_URL "<redacted>" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+/* 6. Define the user Email and password that alreadey registerd or added in your project */
+#define USER_EMAIL "USER_EMAIL"
+#define USER_PASSWORD "USER_PASSWORD"
+
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = {
@@ -37,7 +69,86 @@ HardwareSerial DebugSerial(PD6, PD5);
 SPIClass ethSPI(PB5, PB4, PB3);
 IPAddress gw(10, 10, 1, 1);
 IPAddress sn(255, 255, 255, 0);
+IPAddress dnss(10, 10, 1, 1);
+IPAddress self(10, 10, 1, 183);
+FirebaseData fbdo;
 
+FirebaseAuth auth;
+FirebaseConfig config;
+SSLClient ssl_client(client, TAs, (size_t)TAs_NUM, PD0);
+
+// For NTP client
+EthernetUDP udpClient;
+
+MB_NTP ntpClient(&udpClient, "pool.ntp.org" /* NTP host */, 123 /* NTP port */, 0 /* timezone offset in seconds */);
+unsigned long sendDataPrevMillis = 0;
+
+int count = 0;
+
+volatile bool dataChanged = false;
+uint32_t timestamp = 0;
+
+void ResetEthernet()
+{
+    Ethernet.hardreset();
+}
+
+void networkConnection()
+{
+
+    ResetEthernet();
+
+    Ethernet.begin(mac, &ethSPI);
+
+    unsigned long to = millis();
+
+    while (Ethernet.linkReport() == "LINK" || millis() - to < 2000)
+    {
+        delay(100);
+    }
+
+    if (Ethernet.linkReport() == "LINK")
+    {
+        DebugSerial.print("Connected with IP ");
+        DebugSerial.println(Ethernet.localIP());
+    }
+    else
+    {
+        DebugSerial.println("Can't connected");
+    }
+}
+
+// Define the callback function to handle server status acknowledgement
+void networkStatusRequestCallback()
+{
+    // Set the network status
+    fbdo.setNetworkStatus(Ethernet.linkReport() == "LINK");
+}
+
+// Define the callback function to handle server connection
+void tcpConnectionRequestCallback(const char *host, int port)
+{
+
+    // You may need to set the system timestamp to use for
+    // auth token expiration checking.
+
+    if (timestamp == 0)
+    {
+        DebugSerial.print("Getting time from NTP server...");
+        timestamp = ntpClient.getTime(2000 /* wait 2000 ms */);
+
+        if (timestamp > 0)
+            Firebase.setSystemTime(timestamp);
+    }
+
+    DebugSerial.print("Connecting to server via external Client... ");
+    if (!ssl_client.connect(host, port))
+    {
+        DebugSerial.println("failed.");
+        return;
+    }
+    DebugSerial.println("success.");
+}
 
 void setup()
 {
@@ -57,29 +168,13 @@ void setup()
     pinMode(PB8, OUTPUT);
     pinMode(PB6, OUTPUT);
     DebugSerial.println("STARTED");
-       // tft.init();
-    //tft.setRotation(1);
-   // tft.fillScreen(TFT_RED);
-   // tft.setCursor(0, 0);
     Ethernet.setCsPin(PB6);
     Ethernet.setRstPin(PB8);
-
-    while (Ethernet.begin(mac, &ethSPI) == 0)
-    {
-        DebugSerial.println(Ethernet.linkReport());
-        DebugSerial.println(Ethernet.speedReport());
-        DebugSerial.println("Failed to configure Ethernet using DHCP");
-        DebugSerial.print("My IP address: ");
-        for (byte thisByte = 0; thisByte < 4; thisByte++)
-        {
-            // print the value of each byte of the IP address:
-            DebugSerial.print(Ethernet.localIP()[thisByte], DEC);
-            DebugSerial.print(".");
-        }
-        DebugSerial.println();
-    }
+    Ethernet.setHostname("VOC Sensor");
+   Ethernet.begin(mac, self, sn, gw, dnss, &ethSPI);
+   
     // print your local IP address:
-
+    Ethernet.WoL();
     delay(100);
     DebugSerial.println(Ethernet.linkReport());
     DebugSerial.println(Ethernet.speedReport());
@@ -91,9 +186,49 @@ void setup()
         DebugSerial.print(Ethernet.localIP()[thisByte], DEC);
         DebugSerial.print(".");
     }
+    DebugSerial.println(Ethernet.dnsServerIP());
     DebugSerial.println();
     delay(1000);
+    DebugSerial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
+    /* Assign the api key (required) */
+    config.api_key = API_KEY;
+
+    /* Assign the RTDB URL (required) */
+    config.database_url = DATABASE_URL;
+    auth.user.email = USER_EMAIL;
+    auth.user.password = USER_PASSWORD;
+    /* Assign the callback function for the long running token generation task */
+    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
+
+    /* fbdo.setExternalClient and fbdo.setExternalClientCallbacks must be called before Firebase.begin */
+
+    /* Assign the pointer to global defined external SSL Client object */
+    fbdo.setExternalClient(&ssl_client);
+
+    /* Assign the required callback functions */
+    fbdo.setExternalClientCallbacks(tcpConnectionRequestCallback, networkConnection, networkStatusRequestCallback);
+
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    Firebase.reconnectWiFi(true);
+
+    Firebase.setDoubleDigits(5);
+    if (Firebase.signUp(&config, &auth, "", ""))
+    {
+        DebugSerial.println("ok");
+
+        /** if the database rules were set as in the example "EmailPassword.ino"
+         * This new user can be access the following location.
+         *
+         * "/UserData/<user uid>"
+         *
+         * The new user UID or <user uid> can be taken from auth.token.uid
+         */
+    }
+    else
+        DebugSerial.printf("%s\n", config.signer.signupError.message.c_str());
+    config.token_status_callback = tokenStatusCallback;
+    Firebase.begin(&config, &auth);
     int8_t lib_ret;
     zmod4xxx_err api_ret;
 
@@ -156,6 +291,18 @@ void loop()
     /* lib_ret -> Return of Library
      * api_ret -> Return of API
      */
+
+    while (1)
+    {
+        if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
+        {
+            sendDataPrevMillis = millis();
+
+            DebugSerial.printf("Set bool... %s\n", Firebase.RTDB.setBool(&fbdo, F("/test/bool"), count % 2 == 0) ? "ok" : fbdo.errorReason().c_str());
+
+            count++;
+        }
+    }
     int8_t lib_ret;
     zmod4xxx_err api_ret;
     uint32_t polling_counter = 0;

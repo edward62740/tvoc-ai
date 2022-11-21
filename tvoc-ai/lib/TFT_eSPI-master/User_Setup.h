@@ -166,13 +166,7 @@
 // ###### EDIT THE PIN NUMBERS IN THE LINES FOLLOWING TO SUIT YOUR ESP8266 SETUP ######
 
 // For NodeMCU - use pin numbers in the form PIN_Dx where Dx is the NodeMCU pin designation
-#define TFT_CS   -1
-#define TFT_DC   PC8  // Data Command control pin
-#define TFT_RST  PC7  // Reset pin (could connect to NodeMCU RST, see next line)
-//#define TFT_MISO 19
-#define TFT_MOSI PC12
-#define TFT_SCLK PC10
-#define TFT_BL PC9  // LED back-light (only for ST7789 with backlight control pin)
+
 
 //#define TOUCH_CS PIN_D2     // Chip select pin (T_CS) of touch screen
 
@@ -278,6 +272,12 @@
 //#define TFT_MISO PB14
 //#define TFT_SCLK PB13
 
+#define TFT_DC   PC8  // Data Command control pin
+#define TFT_RST  PC7  // Reset pin (could connect to NodeMCU RST, see next line)
+#define TFT_MISO PC11
+#define TFT_MOSI PC12
+#define TFT_SCLK PC10
+#define TFT_BL PC9  // LED back-light (only for ST7789 with backlight control pin)
 // Can use Ardiuno pin references, arbitrary allocation, TFT_eSPI controls chip select
 //#define TFT_CS   D5 // Chip select control pin to TFT CS
 //#define TFT_DC   D6 // Data Command control pin to TFT DC (may be labelled RS = Register Select)
@@ -340,9 +340,9 @@
 // #define SPI_FREQUENCY   1000000
 // #define SPI_FREQUENCY   5000000
 // #define SPI_FREQUENCY  10000000
- #define SPI_FREQUENCY  20000000
+ 
 //define SPI_FREQUENCY  27000000
- //#define SPI_FREQUENCY  40000000
+ #define SPI_FREQUENCY  40000000
 // #define SPI_FREQUENCY  55000000 // STM32 SPI1 only (SPI2 maximum is 27MHz)
 // #define SPI_FREQUENCY  80000000
 
