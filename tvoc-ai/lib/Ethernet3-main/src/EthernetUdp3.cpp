@@ -119,11 +119,11 @@ int EthernetUDP::beginPacket(const char *host, uint16_t port)
   int ret = 0;
   DNSClient dns;
   IPAddress remote_addr;
-
+IPAddress ts(162, 159, 200, 123);
   dns.begin(Ethernet.dnsServerIP());
   ret = dns.getHostByName(host, remote_addr);
   if (ret == 1) {
-    return beginPacket(remote_addr, port);
+    return beginPacket(ts, port);
   } else {
     return ret;
   }
