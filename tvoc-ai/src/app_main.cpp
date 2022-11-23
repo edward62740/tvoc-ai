@@ -3,19 +3,25 @@
 #include <Arduino.h>
 #include <Ethernet3.h>
 #include "app_comms.h"
-
+#include "TFT_eSPI.h"
 uint8_t Eth_MAC[] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
 
 HardwareSerial DebugSerial(PD6, PD5);
 SPIClass ethSPI(PB5, PB4, PB3);
 AppComms comms(&ethSPI, Eth_MAC, PB6, PB8, "voc-sensor-t", &DebugSerial);
-
-
+TFT_eSPI tft = TFT_eSPI();
 void mainTask(void *pvParameters)
 {
- (void) pvParameters;
+    (void)pvParameters;
     DebugSerial.begin(115200);
     DebugSerial.println("Starting...");
+  tft.init();
+  tft.initDMA();
+  tft.fillScreen(TFT_BLACK);
+
+    tft.println("Starting...");
+    tft.setCursor(0, 20);
+    tft.println("Starting...");
     comms.begin();
     while (!comms.isReady())
     {

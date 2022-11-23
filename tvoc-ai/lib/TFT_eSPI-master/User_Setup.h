@@ -271,7 +271,7 @@
 //#define TFT_MOSI PB15
 //#define TFT_MISO PB14
 //#define TFT_SCLK PB13
-
+#define STM32_DMA
 #define TFT_DC   PC8  // Data Command control pin
 #define TFT_RST  PC7  // Reset pin (could connect to NodeMCU RST, see next line)
 #define TFT_MISO PC11
@@ -342,7 +342,7 @@
  //#define SPI_FREQUENCY  10000000
  
 //#define SPI_FREQUENCY  27000000
- #define SPI_FREQUENCY  40000000
+ #define SPI_FREQUENCY  4000000
 // #define SPI_FREQUENCY  55000000 // STM32 SPI1 only (SPI2 maximum is 27MHz)
 // #define SPI_FREQUENCY  80000000
 
