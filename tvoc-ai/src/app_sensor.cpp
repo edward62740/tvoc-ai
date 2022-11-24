@@ -129,7 +129,7 @@ void AppSensor::sensorTask(void *pvParameters)
         }
         else
         {
-            this->SensorResultMap.insert(std::pair<char *, float>("log_Rcda", this->s.algo_results.log_rcda));
+            this->SensorResultMap.insert(std::pair<char *, float>("logRcda", this->s.algo_results.log_rcda));
             this->SensorResultMap.insert(std::pair<char *, float>("EtOH", this->s.algo_results.etoh));
             this->SensorResultMap.insert(std::pair<char *, float>("TVOC", this->s.algo_results.tvoc));
             this->SensorResultMap.insert(std::pair<char *, float>("eCO2", this->s.algo_results.eco2));
@@ -137,6 +137,13 @@ void AppSensor::sensorTask(void *pvParameters)
             this->ser_log->println(F("*********** Measurements ***********"));
             for (int i = 0; i < 13; i++)
             {
+                char tag[7];
+    
+                sprintf(tag, "%d", i);
+                
+                strcat(tag, "RMox");
+                this->ser_log->print(tag);
+
                 this->ser_log->print(F(" Rmox["));
                 this->ser_log->print(i);
                 this->ser_log->print(F("] = "));

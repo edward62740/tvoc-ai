@@ -18,7 +18,7 @@ void mainTask(void *pvParameters)
 
     DebugSerial.begin(115200);
     DebugSerial.println("Starting...");
-    tft.init();
+  /* tft.init();
     tft.initDMA();
     tft.resetViewport();
     tft.fillScreen(TFT_BLUE);
@@ -31,7 +31,7 @@ void mainTask(void *pvParameters)
     {
         tft.fillScreen(random(0x0000, 0xFFFF));
         delay(50);
-    }
+    }*/
 
     comms.begin();
     while (!comms.isReady())
@@ -52,5 +52,6 @@ void mainTask(void *pvParameters)
         comms.sendAll(sensor.SensorResultMap, db_name, db_token);
         digitalToggle(PG12);
         vTaskDelay(2500);
+        DebugSerial.println(sensor.SensorResultMap.size());
     }
 }
