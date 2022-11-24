@@ -16,6 +16,7 @@
  */
 
 #include "i2c_wrapper_arduino.h"
+#include "STM32FreeRTOS.h"
 TwoWire Wire2(PF0, PF1);
 void arduino_i2c_setup()
 {
@@ -24,7 +25,7 @@ void arduino_i2c_setup()
 
 void arduino_delay(uint32_t ms)
 {
-    delay(ms);
+    vTaskDelay(ms);
 }
 
 int8_t arduino_i2c_read(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *buf,

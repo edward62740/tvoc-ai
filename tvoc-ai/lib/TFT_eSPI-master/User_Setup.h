@@ -73,7 +73,7 @@
 // For ST7735, ST7789 and ILI9341 ONLY, define the colour order IF the blue and red are swapped on your display
 // Try ONE option at a time to find the correct colour order for your display
 
-  #define TFT_RGB_ORDER TFT_RGB  // Colour order Red-Green-Blue
+//  #define TFT_RGB_ORDER TFT_RGB  // Colour order Red-Green-Blue
 //  #define TFT_RGB_ORDER TFT_BGR  // Colour order Blue-Green-Red
 
 // For M5Stack ESP32 module with integrated ILI9341 display ONLY, remove // in line below
@@ -113,7 +113,7 @@
 // 2 lines try both options, one of the options should correct the inversion.
 
 // #define TFT_INVERSION_ON
- #define TFT_INVERSION_OFF
+// #define TFT_INVERSION_OFF
 
 
 // ##################################################################################
@@ -167,6 +167,9 @@
 
 // For NodeMCU - use pin numbers in the form PIN_Dx where Dx is the NodeMCU pin designation
 
+//#define TFT_RST  -1    // Set TFT_RST to -1 if the display RESET is connected to NodeMCU RST or 3.3V
+
+//#define TFT_BL PIN_D1  // LED back-light (only for ST7789 with backlight control pin)
 
 //#define TOUCH_CS PIN_D2     // Chip select pin (T_CS) of touch screen
 
@@ -262,22 +265,18 @@
 // ######       EDIT THE PINs BELOW TO SUIT YOUR STM32 SPI TFT SETUP        ######
 
 // The TFT can be connected to SPI port 1 or 2
-//#define TFT_SPI_PORT 1 // SPI port 1 maximum clock rate is 55MHz
-//#define TFT_MOSI PA7
-//#define TFT_MISO PA6
-//#define TFT_SCLK PA5
+#define TFT_SPI_PORT 3 // SPI port 1 maximum clock rate is 55MHz
+#define TFT_MOSI PC12
+#define TFT_MISO PC11
+#define TFT_SCLK PC10
+#define TFT_DC   PC8  // Data Command control pin
+#define TFT_RST  PC7  // Reset pin (could connect to NodeMCU RST, see next line)
 
 //#define TFT_SPI_PORT 2 // SPI port 2 maximum clock rate is 27MHz
 //#define TFT_MOSI PB15
 //#define TFT_MISO PB14
 //#define TFT_SCLK PB13
-#define STM32_DMA
-#define TFT_DC   PC8  // Data Command control pin
-#define TFT_RST  PC7  // Reset pin (could connect to NodeMCU RST, see next line)
-#define TFT_MISO PC11
-#define TFT_MOSI PC12
-#define TFT_SCLK PC10
-#define TFT_BL PC9  // LED back-light (only for ST7789 with backlight control pin)
+
 // Can use Ardiuno pin references, arbitrary allocation, TFT_eSPI controls chip select
 //#define TFT_CS   D5 // Chip select control pin to TFT CS
 //#define TFT_DC   D6 // Data Command control pin to TFT DC (may be labelled RS = Register Select)
@@ -325,11 +324,25 @@
 // For RP2040 processor and SPI displays, uncomment the following line to use the PIO interface.
 //#define RP2040_PIO_SPI // Leave commented out to use standard RP2040 SPI port interface
 
+// For RP2040 processor and 8 or 16 bit parallel displays:
+// The parallel interface write cycle period is derived from a division of the CPU clock
+// speed so scales with the processor clock. This means that the divider ratio may need
+// to be increased when overclocking. I may also need to be adjusted dependant on the
+// display controller type (ILI94341, HX8357C etc). If RP2040_PIO_CLK_DIV is not defined
+// the library will set default values which may not suit your display.
+// The display controller data sheet will specify the minimum write cycle period. The
+// controllers often work reliably for shorter periods, however if the period is too short
+// the display may not initialise or graphics will become corrupted.
+// PIO write cycle frequency = (CPU clock/(4 * RP2040_PIO_CLK_DIV))
+//#define RP2040_PIO_CLK_DIV 1 // 32ns write cycle at 125MHz CPU clock
+//#define RP2040_PIO_CLK_DIV 2 // 64ns write cycle at 125MHz CPU clock
+//#define RP2040_PIO_CLK_DIV 3 // 96ns write cycle at 125MHz CPU clock
+
 // For the RP2040 processor define the SPI port channel used (default 0 if undefined)
 //#define TFT_SPI_PORT 1 // Set to 0 if SPI0 pins are used, or 1 if spi1 pins used
 
 // For the STM32 processor define the SPI port channel used (default 1 if undefined)
-#define TFT_SPI_PORT 3 // Set to 1 for SPI port 1, or 2 for SPI port 2
+//#define TFT_SPI_PORT 2 // Set to 1 for SPI port 1, or 2 for SPI port 2
 
 // Define the SPI clock frequency, this affects the graphics rendering speed. Too
 // fast and the TFT driver will not keep up and display corruption appears.
@@ -339,18 +352,18 @@
 
 // #define SPI_FREQUENCY   1000000
 // #define SPI_FREQUENCY   5000000
- //#define SPI_FREQUENCY  10000000
- 
+// #define SPI_FREQUENCY  10000000
+// #define SPI_FREQUENCY  20000000
 //#define SPI_FREQUENCY  27000000
- #define SPI_FREQUENCY  4000000
+#define SPI_FREQUENCY  42000000
 // #define SPI_FREQUENCY  55000000 // STM32 SPI1 only (SPI2 maximum is 27MHz)
 // #define SPI_FREQUENCY  80000000
 
 // Optional reduced SPI frequency for reading TFT
-//#define SPI_READ_FREQUENCY  20000000
+#define SPI_READ_FREQUENCY  20000000
 
 // The XPT2046 requires a lower SPI clock rate of 2.5MHz so we define that here:
-//#define SPI_TOUCH_FREQUENCY  2500000
+#define SPI_TOUCH_FREQUENCY  2500000
 
 // The ESP32 has 2 free SPI ports i.e. VSPI and HSPI, the VSPI is the default.
 // If the VSPI port is in use and pins are not accessible (e.g. TTGO T-Beam)
