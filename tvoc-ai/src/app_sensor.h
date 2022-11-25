@@ -15,13 +15,19 @@ public:
     AppSensor(HardwareSerial *log = &Serial);
     ~AppSensor();
     void startSensorTask(TaskHandle_t handle, UBaseType_t priority);
-    SemaphoreHandle_t xIsMeasurementReady();
-    std::map<char *, float> SensorResultMap;
+    SemaphoreHandle_t xIsMeasurementReady(); // Function to return xMeasFlag
+
+    std::map<char *, float> SensorResultMap; // Map to store sensor results
+
 private:
-    TaskHandle_t *appSensorTask;
-    HardwareSerial *ser_log;
+    void sensorTask(void *pvParameters);
+    static void startSensorTaskImpl(void *_this);
+
+    TaskHandle_t *appSensorTask; // Task handle for the sensor task
+    HardwareSerial *ser_log; // Serial port for logging
     struct
     {
+        /* zmod4xxx built-ins */
         zmod4xxx_dev_t dev;
         uint8_t zmod4xxx_status;
         uint8_t prod_data[7];
@@ -29,12 +35,11 @@ private:
         iaq_2nd_gen_handle_t algo_handle;
         iaq_2nd_gen_results_t algo_results;
 
-        SemaphoreHandle_t xMeasFlag;
-        bool setupError = false;
+        SemaphoreHandle_t xMeasFlag; // Ensures that the same measurement is not read twice
+        bool isDataValid = false; // Indicates if the data is valid
+        volatile uint64_t runTimeSecs = 0; // Time since the sensor startup
+        volatile uint32_t numMeas = 0; // Number of measurements taken since startup
     } s;
-    
-    void sensorTask(void *pvParameters);
-    static void startSensorTaskImpl(void *_this);
 };
 
 #endif // APP_SENSOR_H

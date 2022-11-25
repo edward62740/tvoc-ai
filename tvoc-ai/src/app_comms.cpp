@@ -14,8 +14,9 @@ AppComms::~AppComms()
 {
 }
 
-void AppComms::begin()
+void AppComms::begin(uint8_t no_link_tol_cnt)
 {
+    this->eth_if.no_link_tol_cnt = no_link_tol_cnt;
     Ethernet.setCsPin(this->eth_if.csPin);
     Ethernet.setRstPin(this->eth_if.rstPin);
     Ethernet.setHostname(this->eth_if.hostname);
@@ -24,12 +25,18 @@ void AppComms::begin()
 
 bool AppComms::isReady()
 {
-    this->ser_log->println(Ethernet.localIP());
+    if (this->eth_if.prev_link_state > 5 && Ethernet.link() == 1)
+    {
+        HAL_NVIC_SystemReset();
+    }
+    Ethernet.link() == 1 ? this->eth_if.prev_link_state = 0 : this->eth_if.prev_link_state++;
     return Ethernet.link() == 1 ? true : false;
 }
 
 int AppComms::connect(const char *host, uint16_t port)
 {
+    client.setTimeout(1000);
+    this->eth_if.prev_link_state = Ethernet.link();
     return client.connect(host, port);
 }
 
@@ -40,6 +47,7 @@ bool AppComms::sendAll(std::map<char *, float> SensorResultMap, const char *db_i
     this->db.token = (char *)token;
     char resp[255] = {0};
     uint16_t payload_size = 0;
+
     client.print("POST /write?db=");
     client.print(this->db.db_id);
     client.println(" HTTP/1.1");
@@ -71,6 +79,7 @@ bool AppComms::sendAll(std::map<char *, float> SensorResultMap, const char *db_i
         this->ser_log->println(resp);
         return true;
     }
+    client.flush();
+    client.clearWriteError();
     return false;
-    return true;
 }

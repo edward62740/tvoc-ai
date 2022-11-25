@@ -14,7 +14,7 @@ public:
 
     ~AppComms();
 
-    void begin();
+    void begin(uint8_t no_link_tol_cnt = 5);
 
     bool isReady();
 
@@ -52,8 +52,7 @@ public:
         }
         return false;
     }
-
-
+    
     bool sendAll(std::map<char *, float>, const char *db_id, const char *token);
 
 private:
@@ -66,6 +65,8 @@ private:
         uint8_t rstPin;
         SPIClass *spi;
         char *hostname;
+        uint8_t prev_link_state = 0;
+        uint8_t no_link_tol_cnt = 5;
     } eth_if;
     struct
     {

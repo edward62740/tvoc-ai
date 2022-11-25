@@ -1,5 +1,6 @@
 #include "app_sensor.h"
 #include <zmod4410_config_iaq2.h>
+#include "app_main.h"
 
 AppSensor::AppSensor(HardwareSerial *log)
 {
@@ -18,7 +19,7 @@ void AppSensor::startSensorTask(TaskHandle_t handle, UBaseType_t priority)
     xTaskCreate(
         this->startSensorTaskImpl,      /* Task function. */
         (const portCHAR *)"sensorTask", /* name of task. */
-        4096,                          /* Stack size of task */
+        16384,                          /* Stack size of task */
         this,                           /* parameter of the task */
         priority,                       /* priority of the task */
         this->appSensorTask);           /* Task handle to keep track of created task */
@@ -74,7 +75,6 @@ void AppSensor::sensorTask(void *pvParameters)
         this->ser_log->print(api_ret);
         this->ser_log->println(F(" during starting measurement, exiting program!\n"));
     }
-    xSemaphoreGive(this->s.xMeasFlag);
     for (;;)
     {
         int8_t lib_ret;
@@ -125,16 +125,19 @@ void AppSensor::sensorTask(void *pvParameters)
         lib_ret = calc_iaq_2nd_gen(&(this->s.algo_handle), &(this->s.dev), this->s.adc_result, &(this->s.algo_results));
         if ((lib_ret != IAQ_2ND_GEN_OK) && (lib_ret != IAQ_2ND_GEN_STABILIZATION))
         {
+            digitalWrite(led_err, HIGH);
             this->ser_log->println(F("Error when calculating algorithm, exiting program!"));
         }
         else
         {
-
+            digitalWrite(led_err, LOW);
             this->SensorResultMap["logRcda"] = this->s.algo_results.log_rcda;
             this->SensorResultMap["EtOH"] = this->s.algo_results.etoh;
             this->SensorResultMap["TVOC"] = this->s.algo_results.tvoc;
             this->SensorResultMap["eCO2"] = this->s.algo_results.eco2;
             this->SensorResultMap["IAQ"] = this->s.algo_results.iaq;
+            this->SensorResultMap["Measurements"] = static_cast<float>(this->s.numMeas++);
+            xSemaphoreGive(this->s.xMeasFlag);
             this->ser_log->println(F("*********** Measurements ***********"));
 
             this->ser_log->print(F(" log_Rcda = "));
@@ -152,19 +155,14 @@ void AppSensor::sensorTask(void *pvParameters)
             this->ser_log->print(F(" IAQ  = "));
             this->ser_log->println(this->s.algo_results.iaq);
 
-            if (lib_ret == IAQ_2ND_GEN_STABILIZATION)
-            {
-                this->ser_log->println(F("Warmup!"));
-            }
-            else
-            {
-                this->ser_log->println(F("Valid!"));
-            }
+            lib_ret == IAQ_2ND_GEN_STABILIZATION ? this->s.isDataValid = false : this->s.isDataValid = true;
+
+            this->ser_log->println(uxTaskGetStackHighWaterMark(NULL));
         }
-
+        digitalWrite(led_meas, LOW);
         /* wait 1.99 seconds before starting the next measurement */
-        this->s.dev.delay_ms(1990);
-
+        vTaskDelay(1999 / portTICK_PERIOD_MS);
+        digitalWrite(led_meas, HIGH);
         /* start a new measurement before result calculation */
         api_ret = zmod4xxx_start_measurement(&(this->s.dev));
         if (api_ret)
