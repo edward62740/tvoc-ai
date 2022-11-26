@@ -125,18 +125,20 @@ void AppSensor::sensorTask(void *pvParameters)
         lib_ret = calc_iaq_2nd_gen(&(this->s.algo_handle), &(this->s.dev), this->s.adc_result, &(this->s.algo_results));
         if ((lib_ret != IAQ_2ND_GEN_OK) && (lib_ret != IAQ_2ND_GEN_STABILIZATION))
         {
-            digitalWrite(led_err, HIGH);
+            digitalWrite(LED_ERR, HIGH);
             this->ser_log->println(F("Error when calculating algorithm, exiting program!"));
         }
         else
         {
-            digitalWrite(led_err, LOW);
+            digitalWrite(LED_ERR, LOW);
             this->SensorResultMap["logRcda"] = this->s.algo_results.log_rcda;
             this->SensorResultMap["EtOH"] = this->s.algo_results.etoh;
             this->SensorResultMap["TVOC"] = this->s.algo_results.tvoc;
             this->SensorResultMap["eCO2"] = this->s.algo_results.eco2;
             this->SensorResultMap["IAQ"] = this->s.algo_results.iaq;
             this->SensorResultMap["Measurements"] = static_cast<float>(this->s.numMeas++);
+            this->SensorResultMap["Status"] = static_cast<float>(this->s.zmod4xxx_status);
+            this->SensorResultMap["MeasCount"] = static_cast<float>(this->s.numMeas);
             xSemaphoreGive(this->s.xMeasFlag);
             this->ser_log->println(F("*********** Measurements ***********"));
 
@@ -159,10 +161,10 @@ void AppSensor::sensorTask(void *pvParameters)
 
             this->ser_log->println(uxTaskGetStackHighWaterMark(NULL));
         }
-        digitalWrite(led_meas, LOW);
+        digitalWrite(LED_MEAS, LOW);
         /* wait 1.99 seconds before starting the next measurement */
         vTaskDelay(1999 / portTICK_PERIOD_MS);
-        digitalWrite(led_meas, HIGH);
+        digitalWrite(LED_MEAS, HIGH);
         /* start a new measurement before result calculation */
         api_ret = zmod4xxx_start_measurement(&(this->s.dev));
         if (api_ret)
