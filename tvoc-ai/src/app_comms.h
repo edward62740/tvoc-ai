@@ -64,16 +64,16 @@ private:
         uint8_t csPin;
         uint8_t rstPin;
         SPIClass *spi;
-        char *hostname;
-        uint8_t prev_link_state = 0;
-        uint8_t no_link_tol_cnt = 5;
-    } eth_if;
+        char *hostname; // self hostname
+        uint8_t prev_link_state = 0; // 0 = link up, 1 = link down
+        uint8_t no_link_tol_cnt = 5; // Number of times to check for link before resetting
+    } eth_if; // Ethernet interface
     struct
     {
-        char *host;
-        uint16_t port;
-        char *db_id;
-        char *token;
-    } db;
+        char *host; // db server ip
+        uint16_t port; // db server port
+        char *db_id; // db id
+        char *token; // db token
+    } db; // Database info
 };
 #endif /* APP_COMMS_H */

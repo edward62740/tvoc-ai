@@ -5,7 +5,7 @@
 
 void setup()
 {
-
+    // Hand over control to FreeRTOS
     xTaskCreate(
         mainTask,                     /* Task function. */
         (const portCHAR *)"mainTask", /* name of task. */

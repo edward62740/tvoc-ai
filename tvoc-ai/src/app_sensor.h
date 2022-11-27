@@ -20,7 +20,7 @@ public:
     std::map<char *, float> SensorResultMap; // Map to store sensor results
 
 private:
-    void sensorTask(void *pvParameters);
+    void sensorTask(void *pvParameters); // Main sensor task, will regularly update SensorResultMap and give xMeasFlag through xIsMeasurementReady
     static void startSensorTaskImpl(void *_this);
 
     TaskHandle_t *appSensorTask; // Task handle for the sensor task

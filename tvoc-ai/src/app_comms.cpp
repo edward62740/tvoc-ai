@@ -12,6 +12,7 @@ AppComms::AppComms(SPIClass *spi, const uint8_t *mac, const uint8_t csPin, const
 
 AppComms::~AppComms()
 {
+    delete this;
 }
 
 void AppComms::begin(uint8_t no_link_tol_cnt)
@@ -20,6 +21,7 @@ void AppComms::begin(uint8_t no_link_tol_cnt)
     Ethernet.setCsPin(this->eth_if.csPin);
     Ethernet.setRstPin(this->eth_if.rstPin);
     Ethernet.setHostname(this->eth_if.hostname);
+    Ethernet.phyMode(FULL_DUPLEX_10);
     Ethernet.begin(this->eth_if.mac, this->eth_if.spi);
 }
 
@@ -30,6 +32,7 @@ bool AppComms::isReady()
         HAL_NVIC_SystemReset();
     }
     Ethernet.link() == 1 ? this->eth_if.prev_link_state = 0 : this->eth_if.prev_link_state++;
+    Ethernet.maintain();
     return Ethernet.link() == 1 ? true : false;
 }
 

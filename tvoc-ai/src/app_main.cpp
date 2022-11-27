@@ -30,7 +30,7 @@ void mainTask(void *pvParameters)
     display.init();
 
     display.drawNoEth();
-    comms.begin();
+    comms.begin(); // Blocking function to start ethernet
     while (!comms.isReady())
     {
         DebugSerial.println("Waiting for Ethernet connection...");
@@ -38,23 +38,22 @@ void mainTask(void *pvParameters)
     }
     display.drawLinkUp();
     digitalWrite(LED_LINK, HIGH);
-    DebugSerial.println("Ethernet started");
-    comms.connect(db_ip, db_port);
+    comms.connect(db_ip, db_port); // Blocking function to connect to influxdb
+
+    /* Spawns a task to run sensor algorithms, should be yielded to by main task every 3s (+-) 5% for accuracy */
     sensor.startSensorTask(sensorTask, (UBaseType_t)2);
 
     for (;;)
     {
-        if (xSemaphoreTake(sensor.xIsMeasurementReady(), 1) == pdTRUE)
+        if (xSemaphoreTake(sensor.xIsMeasurementReady(), 1) == pdTRUE) // If sensor yields semp
         {
-            comms.sendAll(sensor.SensorResultMap, db_name, db_token) ? digitalWrite(LED_ERR, LOW) : digitalWrite(LED_ERR, HIGH);
-
-            DebugSerial.println("Measurement sent");
-            display.drawData(sensor.SensorResultMap);
+            comms.sendAll(sensor.SensorResultMap, db_name, db_token) ? digitalWrite(LED_ERR, LOW) : digitalWrite(LED_ERR, HIGH); // Send data to influxdb
+            display.drawData(sensor.SensorResultMap); // Draw data on display
         }
-        displaySleep();
+        displaySleep(); //  Check if display state is appropriate
         digitalToggle(LED_ACT);
         comms.isReady() ? digitalWrite(LED_LINK, HIGH) : digitalWrite(LED_LINK, LOW);
-        vTaskDelay(20);
+        vTaskDelay(20); // Give other tasks a chance to run
     }
 }
 

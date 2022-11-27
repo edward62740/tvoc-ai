@@ -10,6 +10,7 @@ AppSensor::AppSensor(HardwareSerial *log)
 
 AppSensor::~AppSensor()
 {
+    delete this;
 }
 
 void AppSensor::startSensorTask(TaskHandle_t handle, UBaseType_t priority)
@@ -158,6 +159,7 @@ void AppSensor::sensorTask(void *pvParameters)
             this->ser_log->println(this->s.algo_results.iaq);
 
             lib_ret == IAQ_2ND_GEN_STABILIZATION ? this->s.isDataValid = false : this->s.isDataValid = true;
+            this->SensorResultMap["Valid"] = static_cast<float>(this->s.isDataValid);
 
             this->ser_log->println(uxTaskGetStackHighWaterMark(NULL));
         }
