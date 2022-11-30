@@ -29,4 +29,6 @@ const uint8_t ETH_CS = PB6;
 const uint8_t ETH_RST = PB8;
 
 const uint32_t DISPLAY_SLEEP_TIMEOUT_MS = 15000;
+const bool PIR_SENSOR_ENABLED = true;
+
 #endif // APP_MAIN_H

@@ -13,13 +13,13 @@ public:
     void init();
     void drawNoEth();
     void drawLinkUp();
-    bool drawData(std::map<char *, float> SensorResultMap);
+    bool drawData(std::map<const char *, float> SensorResultMap);
     bool _bg_changed = true;
 private:
     TFT_eSPI *tft;
     uint8_t lcd_bl;
     uint16_t _bg_color = TFT_BLACK;
-    std::map<char *, float> prev;
+    std::map<const char *, float> prev;
 };
 
 #endif // APP_DISPLAY_H

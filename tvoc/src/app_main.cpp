@@ -50,7 +50,7 @@ void mainTask(void *pvParameters)
             comms.sendAll(sensor.SensorResultMap, db_name, db_token) ? digitalWrite(LED_ERR, LOW) : digitalWrite(LED_ERR, HIGH); // Send data to influxdb
             display.drawData(sensor.SensorResultMap); // Draw data on display
         }
-        displaySleep(); //  Check if display state is appropriate
+        if(PIR_SENSOR_ENABLED) displaySleep(); //  Check if display state is appropriate
         digitalToggle(LED_ACT);
         comms.isReady() ? digitalWrite(LED_LINK, HIGH) : digitalWrite(LED_LINK, LOW);
         vTaskDelay(20); // Give other tasks a chance to run

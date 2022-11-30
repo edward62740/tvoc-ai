@@ -43,7 +43,7 @@ int AppComms::connect(const char *host, uint16_t port)
     return client.connect(host, port);
 }
 
-bool AppComms::sendAll(std::map<char *, float> SensorResultMap, const char *db_id, const char *token)
+bool AppComms::sendAll(std::map<const char *, float> SensorResultMap, const char *db_id, const char *token)
 {
 
     this->db.db_id = (char *)db_id;

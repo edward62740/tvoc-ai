@@ -52,7 +52,7 @@ void AppDisplay::drawLinkUp()
     this->tft->print("100M");
 }
 
-bool AppDisplay::drawData(std::map<char *, float> SensorResultMap)
+bool AppDisplay::drawData(std::map<const char *, float> SensorResultMap)
 {
     float iaq = SensorResultMap["IAQ"];
     uint16_t bg_color = TFT_RED;
@@ -89,7 +89,7 @@ bool AppDisplay::drawData(std::map<char *, float> SensorResultMap)
         this->tft->setCursor(10, 40);
         this->tft->setTextDatum(TL_DATUM);
         this->tft->setFreeFont(&FreeSansBold18pt7b);
-        this->tft->setTextColor(TFT_MAGENTA, this->_bg_color);
+        this->tft->setTextColor(0x001A, this->_bg_color);
         this->tft->print("IAQ ");
         this->tft->setCursor(10, 70);
         this->tft->print("CO2 ");

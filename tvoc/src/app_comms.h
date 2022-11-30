@@ -53,7 +53,7 @@ public:
         return false;
     }
     
-    bool sendAll(std::map<char *, float>, const char *db_id, const char *token);
+    bool sendAll(std::map<const char *, float>, const char *db_id, const char *token);
 
 private:
     EthernetClient client;

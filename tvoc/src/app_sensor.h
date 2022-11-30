@@ -17,7 +17,7 @@ public:
     void startSensorTask(TaskHandle_t handle, UBaseType_t priority);
     SemaphoreHandle_t xIsMeasurementReady(); // Function to return xMeasFlag
 
-    std::map<char *, float> SensorResultMap; // Map to store sensor results
+    std::map<const char *, float> SensorResultMap; // Map to store sensor results
 
 private:
     void sensorTask(void *pvParameters); // Main sensor task, will regularly update SensorResultMap and give xMeasFlag through xIsMeasurementReady
