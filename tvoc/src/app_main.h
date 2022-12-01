@@ -4,6 +4,8 @@
 void mainTask(void *pvParameters);
 void displaySleep(void);
 
+// #define ENABLE_FACTORY_CLEAN_SENSOR
+
 static PGM_P self_name = "VOC-Sensor";
 static const uint8_t self_mac[6] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
 

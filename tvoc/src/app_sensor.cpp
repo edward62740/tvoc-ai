@@ -2,6 +2,12 @@
 #include <zmod4410_config_iaq2.h>
 #include "app_main.h"
 
+#ifdef ENABLE_FACTORY_CLEAN_SENSOR
+extern "C" {
+#include "m7f/zmod4xxx_cleaning.h"
+}
+#endif
+
 AppSensor::AppSensor(HardwareSerial *log)
 {
     this->s.xMeasFlag = xSemaphoreCreateBinary();
@@ -53,6 +59,15 @@ void AppSensor::sensorTask(void *pvParameters)
         this->ser_log->println(
             F(" during reading sensor information, exiting program!\n"));
     }
+
+    #ifdef ENABLE_FACTORY_CLEAN_SENSOR
+    this->ser_log->println(F("Cleaning sensor..."));
+    int8_t ret = zmod4xxx_cleaning_run(&(this->s.dev));
+    if (ret) {
+       this->ser_log->printf("Error %d during cleaning procedure, exiting program!\n", ret);
+    }
+    #endif
+
     /* Preperation of sensor */
     api_ret = zmod4xxx_prepare_sensor(&(this->s.dev));
     if (api_ret)
@@ -61,6 +76,8 @@ void AppSensor::sensorTask(void *pvParameters)
         this->ser_log->print(api_ret);
         this->ser_log->println(F(" during preparation of the sensor, exiting program!\n"));
     }
+
+
     /* One time initialization of the algorithm */
     lib_ret = init_iaq_2nd_gen(&(this->s.algo_handle));
     if (lib_ret)
