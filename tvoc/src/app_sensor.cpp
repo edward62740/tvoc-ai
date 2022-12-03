@@ -8,13 +8,13 @@ extern "C" {
 }
 #endif
 
-AppSensor::AppSensor(HardwareSerial *log)
+AppSensor::AppSensor(uint8_t tmp)
 {
+    (void)tmp;
     this->s.xMeasFlag = xSemaphoreCreateBinary();
-    this->ser_log = log;
 }
 
-AppSensor::~AppSensor()
+AppSensor::~AppSensor(void)
 {
     delete this;
 }
@@ -22,7 +22,7 @@ AppSensor::~AppSensor()
 void AppSensor::startSensorTask(TaskHandle_t handle, UBaseType_t priority)
 {
     this->appSensorTask = &handle;
-    this->ser_log->println("Starting sensor task");
+    DEBUG_PRINTLN("Starting sensor task");
     xTaskCreate(
         this->startSensorTaskImpl,      /* Task function. */
         (const portCHAR *)"sensorTask", /* name of task. */
@@ -37,14 +37,14 @@ void AppSensor::sensorTask(void *pvParameters)
     int8_t lib_ret;
     zmod4xxx_err api_ret;
 
-    this->ser_log->println(F("Starting the Sensor!"));
+    DEBUG_PRINTLN(F("Starting the Sensor!"));
 
     api_ret = init_hardware(&(this->s.dev));
     if (api_ret)
     {
-        this->ser_log->print(F("Error "));
-        this->ser_log->print(api_ret);
-        this->ser_log->println(F(" during init hardware, exiting program!\n"));
+        DEBUG_PRINT(F("Error "));
+        DEBUG_PRINT(api_ret);
+        DEBUG_PRINTLN(F(" during init hardware, exiting program!\n"));
     }
     this->s.dev.i2c_addr = ZMOD4410_I2C_ADDR;
     this->s.dev.pid = ZMOD4410_PID;
@@ -54,17 +54,17 @@ void AppSensor::sensorTask(void *pvParameters)
     api_ret = zmod4xxx_read_sensor_info(&(this->s.dev));
     if (api_ret)
     {
-        this->ser_log->print(F("Error "));
-        this->ser_log->print(api_ret);
-        this->ser_log->println(
+        DEBUG_PRINT(F("Error "));
+        DEBUG_PRINT(api_ret);
+        DEBUG_PRINTLN(
             F(" during reading sensor information, exiting program!\n"));
     }
 
     #ifdef ENABLE_FACTORY_CLEAN_SENSOR
-    this->ser_log->println(F("Cleaning sensor..."));
+    DEBUG_PRINTLN(F("Cleaning sensor..."));
     int8_t ret = zmod4xxx_cleaning_run(&(this->s.dev));
     if (ret) {
-       this->ser_log->printf("Error %d during cleaning procedure, exiting program!\n", ret);
+       DEBUG_PRINTf("Error %d during cleaning procedure, exiting program!\n", ret);
     }
     #endif
 
@@ -72,9 +72,9 @@ void AppSensor::sensorTask(void *pvParameters)
     api_ret = zmod4xxx_prepare_sensor(&(this->s.dev));
     if (api_ret)
     {
-        this->ser_log->print(F("Error "));
-        this->ser_log->print(api_ret);
-        this->ser_log->println(F(" during preparation of the sensor, exiting program!\n"));
+        DEBUG_PRINT(F("Error "));
+        DEBUG_PRINT(api_ret);
+        DEBUG_PRINTLN(F(" during preparation of the sensor, exiting program!\n"));
     }
 
 
@@ -82,16 +82,16 @@ void AppSensor::sensorTask(void *pvParameters)
     lib_ret = init_iaq_2nd_gen(&(this->s.algo_handle));
     if (lib_ret)
     {
-        this->ser_log->println(F("Error "));
-        this->ser_log->print(lib_ret);
-        this->ser_log->println(F(" during initializing algorithm, exiting program!"));
+        DEBUG_PRINTLN(F("Error "));
+        DEBUG_PRINT(lib_ret);
+        DEBUG_PRINTLN(F(" during initializing algorithm, exiting program!"));
     }
     api_ret = zmod4xxx_start_measurement(&(this->s.dev));
     if (api_ret)
     {
-        this->ser_log->print(F("Error "));
-        this->ser_log->print(api_ret);
-        this->ser_log->println(F(" during starting measurement, exiting program!\n"));
+        DEBUG_PRINT(F("Error "));
+        DEBUG_PRINT(api_ret);
+        DEBUG_PRINTLN(F(" during starting measurement, exiting program!\n"));
     }
     for (;;)
     {
@@ -104,9 +104,9 @@ void AppSensor::sensorTask(void *pvParameters)
             api_ret = zmod4xxx_read_status(&(this->s.dev), &(this->s.zmod4xxx_status));
             if (api_ret)
             {
-                this->ser_log->print(F("Error "));
-                this->ser_log->print(api_ret);
-                this->ser_log->println(F(" during read of sensor status, exiting program!\n"));
+                DEBUG_PRINT(F("Error "));
+                DEBUG_PRINT(api_ret);
+                DEBUG_PRINTLN(F(" during read of sensor status, exiting program!\n"));
             }
             polling_counter++;
             this->s.dev.delay_ms(200);
@@ -118,13 +118,13 @@ void AppSensor::sensorTask(void *pvParameters)
             api_ret = zmod4xxx_check_error_event(&(this->s.dev));
             if (api_ret)
             {
-                this->ser_log->print(F("Error "));
-                this->ser_log->print(api_ret);
-                this->ser_log->println(F(" during read of sensor status, exiting program!\n"));
+                DEBUG_PRINT(F("Error "));
+                DEBUG_PRINT(api_ret);
+                DEBUG_PRINTLN(F(" during read of sensor status, exiting program!\n"));
             }
-            this->ser_log->print(F("Error"));
-            this->ser_log->print(ERROR_GAS_TIMEOUT);
-            this->ser_log->print(F(" exiting program!"));
+            DEBUG_PRINT(F("Error"));
+            DEBUG_PRINT(ERROR_GAS_TIMEOUT);
+            DEBUG_PRINT(F(" exiting program!"));
         }
         else
         {
@@ -134,9 +134,9 @@ void AppSensor::sensorTask(void *pvParameters)
         api_ret = zmod4xxx_read_adc_result(&(this->s.dev), this->s.adc_result);
         if (api_ret)
         {
-            this->ser_log->print(F("Error "));
-            this->ser_log->print(api_ret);
-            this->ser_log->println(F(" during read of ADC results, exiting program!\n"));
+            DEBUG_PRINT(F("Error "));
+            DEBUG_PRINT(api_ret);
+            DEBUG_PRINTLN(F(" during read of ADC results, exiting program!\n"));
         }
 
         /* calculate the algorithm */
@@ -144,7 +144,7 @@ void AppSensor::sensorTask(void *pvParameters)
         if ((lib_ret != IAQ_2ND_GEN_OK) && (lib_ret != IAQ_2ND_GEN_STABILIZATION))
         {
             digitalWrite(LED_ERR, HIGH);
-            this->ser_log->println(F("Error when calculating algorithm, exiting program!"));
+            DEBUG_PRINTLN(F("Error when calculating algorithm, exiting program!"));
         }
         else
         {
@@ -156,29 +156,28 @@ void AppSensor::sensorTask(void *pvParameters)
             this->SensorResultMap["IAQ"] = this->s.algo_results.iaq;
             this->SensorResultMap["Measurements"] = static_cast<float>(this->s.numMeas++);
             this->SensorResultMap["Status"] = static_cast<float>(this->s.zmod4xxx_status);
-            this->SensorResultMap["MeasCount"] = static_cast<float>(this->s.numMeas);
             xSemaphoreGive(this->s.xMeasFlag);
-            this->ser_log->println(F("*********** Measurements ***********"));
+            DEBUG_PRINTLN(F("*********** Measurements ***********"));
 
-            this->ser_log->print(F(" log_Rcda = "));
-            this->ser_log->print(this->s.algo_results.log_rcda);
-            this->ser_log->println(F(" logOhm"));
-            this->ser_log->print(F(" EtOH = "));
-            this->ser_log->print(this->s.algo_results.etoh);
-            this->ser_log->println(F(" ppm"));
-            this->ser_log->print(F(" TVOC = "));
-            this->ser_log->print(this->s.algo_results.tvoc);
-            this->ser_log->println(F(" mg/m^3"));
-            this->ser_log->print(F(" eCO2 = "));
-            this->ser_log->print(this->s.algo_results.eco2);
-            this->ser_log->println(F(" ppm"));
-            this->ser_log->print(F(" IAQ  = "));
-            this->ser_log->println(this->s.algo_results.iaq);
+            DEBUG_PRINT(F(" log_Rcda = "));
+            DEBUG_PRINT(this->s.algo_results.log_rcda);
+            DEBUG_PRINTLN(F(" logOhm"));
+            DEBUG_PRINT(F(" EtOH = "));
+            DEBUG_PRINT(this->s.algo_results.etoh);
+            DEBUG_PRINTLN(F(" ppm"));
+            DEBUG_PRINT(F(" TVOC = "));
+            DEBUG_PRINT(this->s.algo_results.tvoc);
+            DEBUG_PRINTLN(F(" mg/m^3"));
+            DEBUG_PRINT(F(" eCO2 = "));
+            DEBUG_PRINT(this->s.algo_results.eco2);
+            DEBUG_PRINTLN(F(" ppm"));
+            DEBUG_PRINT(F(" IAQ  = "));
+            DEBUG_PRINTLN(this->s.algo_results.iaq);
 
             lib_ret == IAQ_2ND_GEN_STABILIZATION ? this->s.isDataValid = false : this->s.isDataValid = true;
             this->SensorResultMap["Valid"] = static_cast<float>(this->s.isDataValid);
 
-            this->ser_log->println(uxTaskGetStackHighWaterMark(NULL));
+            DEBUG_PRINTLN(uxTaskGetStackHighWaterMark(NULL));
         }
         digitalWrite(LED_MEAS, LOW);
         /* wait 1.99 seconds before starting the next measurement */
@@ -188,7 +187,7 @@ void AppSensor::sensorTask(void *pvParameters)
         api_ret = zmod4xxx_start_measurement(&(this->s.dev));
         if (api_ret)
         {
-            this->ser_log->println(F("Error when starting measurement, exiting program!\n"));
+            DEBUG_PRINTLN(F("Error when starting measurement, exiting program!\n"));
         }
     }
 }

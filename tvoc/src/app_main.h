@@ -5,13 +5,21 @@ void mainTask(void *pvParameters);
 void displaySleep(void);
 
 // #define ENABLE_FACTORY_CLEAN_SENSOR
-
+#ifdef DEBUG
+#define DEBUG_BEGIN(...) DebugSerial.begin(__VA_ARGS__)
+#define DEBUG_PRINT(...) DebugSerial.print(__VA_ARGS__)
+#define DEBUG_PRINTLN(...) DebugSerial.println(__VA_ARGS__)
+#else
+#define DEBUG_BEGIN(...)
+#define DEBUG_PRINT(...)
+#define DEBUG_PRINTLN(...)
+#endif
 static PGM_P self_name = "VOC-Sensor";
 static const uint8_t self_mac[6] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
 
 static PGM_P db_ip = "<redacted>";
 static const uint16_t db_port = 8086;
-static PGM_P db_name = "tmp";
+static PGM_P db_name = "voc";
 static PGM_P db_token = "<redacted>";
 
 const uint8_t LED_LINK = PG12;

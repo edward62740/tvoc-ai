@@ -12,8 +12,8 @@
 class AppSensor
 {
 public:
-    AppSensor(HardwareSerial *log = &Serial);
-    ~AppSensor();
+    AppSensor(uint8_t tmp = 1);
+    ~AppSensor(void);
     void startSensorTask(TaskHandle_t handle, UBaseType_t priority);
     SemaphoreHandle_t xIsMeasurementReady(); // Function to return xMeasFlag
 
@@ -24,7 +24,6 @@ private:
     static void startSensorTaskImpl(void *_this);
 
     TaskHandle_t *appSensorTask; // Task handle for the sensor task
-    HardwareSerial *ser_log; // Serial port for logging
     struct
     {
         /* zmod4xxx built-ins */

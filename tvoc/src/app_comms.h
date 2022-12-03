@@ -10,7 +10,7 @@
 class AppComms
 {
 public:
-    AppComms(SPIClass *spi, const uint8_t *mac, const uint8_t csPin, const uint8_t rstPin, const char *hostname, HardwareSerial *log = &Serial);
+    AppComms(SPIClass *spi, const uint8_t *mac, const uint8_t csPin, const uint8_t rstPin, const char *hostname);
 
     ~AppComms();
 
@@ -47,7 +47,6 @@ public:
         if (client.available())
         {
             client.readBytes(resp, client.available());
-            this->ser_log->println(resp);
             return true;
         }
         return false;
@@ -57,7 +56,6 @@ public:
 
 private:
     EthernetClient client;
-    HardwareSerial *ser_log;
     struct
     {
         uint8_t *mac;

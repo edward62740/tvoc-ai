@@ -52,12 +52,13 @@ void AppDisplay::drawLinkUp()
     this->tft->print("100M");
 }
 
-bool AppDisplay::drawData(std::map<const char *, float> SensorResultMap)
+bool AppDisplay::drawData(std::map<const char *, float> SensorResultMap, bool link)
 {
     float iaq = SensorResultMap["IAQ"];
     uint16_t bg_color = TFT_RED;
 
-    //
+    if (this->prev_link != link) _bg_changed = true;
+    this->prev_link = link;
     if (iaq <= 1.9)
     {
         this->_bg_color = TFT_DARKGREEN;
@@ -100,11 +101,11 @@ bool AppDisplay::drawData(std::map<const char *, float> SensorResultMap)
         this->tft->fillSmoothRoundRect(0, 185, 240, 55, 8, TFT_BLACK, this->_bg_color);
         this->tft->fillRect(0, 233, 240, 8, TFT_BLACK);
         this->tft->setFreeFont(&FreeSans12pt7b);
-        this->tft->setTextColor(TFT_GREEN, TFT_BLACK);
+        this->tft->setTextColor(link ? TFT_GREEN : TFT_RED, TFT_BLACK);
         this->tft->setCursor(10, 233);
-        this->tft->print("LINK UP");
+        this->tft->print(link ? "LINK UP" : "LINK DOWN");
         this->tft->setCursor(170, 233);
-        this->tft->print("10 M");
+        this->tft->print(link ? "10 M" : "0  M");
         this->tft->setFreeFont(&FreeSans9pt7b);
         this->tft->setTextColor(TFT_PURPLE, TFT_BLACK);
         this->tft->setCursor(10, 205);
@@ -128,7 +129,7 @@ bool AppDisplay::drawData(std::map<const char *, float> SensorResultMap)
     this->tft->setCursor(150, 205);
     this->tft->setFreeFont(&FreeSans9pt7b);
     this->tft->setTextColor(TFT_BLACK);
-    this->tft->print(static_cast<uint32_t>(this->prev["MeasCount"]));
+    this->tft->print(static_cast<uint32_t>(this->prev["Measurements"]));
 
     prev = SensorResultMap;
 
@@ -159,6 +160,6 @@ bool AppDisplay::drawData(std::map<const char *, float> SensorResultMap)
     this->tft->setCursor(150, 205);
     this->tft->setFreeFont(&FreeSans9pt7b);
     this->tft->setTextColor(TFT_LIGHTGREY);
-    this->tft->print(static_cast<uint32_t>(SensorResultMap["MeasCount"]));
+    this->tft->print(static_cast<uint32_t>(SensorResultMap["Measurements"]));
     return true;
 }

@@ -10,11 +10,18 @@
 
 HardwareSerial DebugSerial(UART_RX, UART_TX);
 SPIClass ethSPI(ETH_MOSI, ETH_MISO, ETH_SCK);
-AppComms comms(&ethSPI, self_mac, ETH_CS, ETH_RST, self_name, &DebugSerial);
-AppSensor sensor(&DebugSerial);
+AppComms comms(&ethSPI, self_mac, ETH_CS, ETH_RST, self_name);
+AppSensor sensor(1);
 TFT_eSPI tft;
 AppDisplay display(&tft, LCD_BL);
 TaskHandle_t sensorTask;
+
+extern void HardFault_Handler(void);
+
+void HardFault_Handler(void)
+{
+    NVIC_SystemReset();
+}
 
 void mainTask(void *pvParameters)
 {
@@ -25,15 +32,15 @@ void mainTask(void *pvParameters)
     pinMode(LCD_BL, OUTPUT);
     pinMode(PIR_INT, INPUT_PULLDOWN);
     analogWrite(LCD_BL, 0);
-    DebugSerial.begin(115200);
-    DebugSerial.println("Starting...");
+    DEBUG_BEGIN(115200);
+
     display.init();
 
     display.drawNoEth();
     comms.begin(); // Blocking function to start ethernet
     while (!comms.isReady())
     {
-        DebugSerial.println("Waiting for Ethernet connection...");
+        DEBUG_PRINTLN("Waiting for Ethernet connection...");
         vTaskDelay(200);
     }
     display.drawLinkUp();
@@ -48,7 +55,7 @@ void mainTask(void *pvParameters)
         if (xSemaphoreTake(sensor.xIsMeasurementReady(), 1) == pdTRUE) // If sensor yields semp
         {
             comms.sendAll(sensor.SensorResultMap, db_name, db_token) ? digitalWrite(LED_ERR, LOW) : digitalWrite(LED_ERR, HIGH); // Send data to influxdb
-            display.drawData(sensor.SensorResultMap); // Draw data on display
+            display.drawData(sensor.SensorResultMap, Ethernet.link()); // Draw data on display
         }
         if(PIR_SENSOR_ENABLED) displaySleep(); //  Check if display state is appropriate
         digitalToggle(LED_ACT);
