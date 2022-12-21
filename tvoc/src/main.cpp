@@ -9,9 +9,9 @@ void setup()
     xTaskCreate(
         mainTask,                     /* Task function. */
         (const portCHAR *)"mainTask", /* name of task. */
-        32768,                        /* Stack size of task */
+        8192,                        /* Stack size of task */
         NULL,                         /* parameter of the task */
-        1,                            /* priority of the task */
+        0,                            /* priority of the task */
         NULL);                        /* Task handle to keep track of created task */
 
 

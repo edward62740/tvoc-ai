@@ -26,7 +26,7 @@ void AppSensor::startSensorTask(TaskHandle_t handle, UBaseType_t priority)
     xTaskCreate(
         this->startSensorTaskImpl,      /* Task function. */
         (const portCHAR *)"sensorTask", /* name of task. */
-        16384,                          /* Stack size of task */
+        8192,                          /* Stack size of task */
         this,                           /* parameter of the task */
         priority,                       /* priority of the task */
         this->appSensorTask);           /* Task handle to keep track of created task */
@@ -156,7 +156,7 @@ void AppSensor::sensorTask(void *pvParameters)
             this->SensorResultMap["IAQ"] = this->s.algo_results.iaq;
             this->SensorResultMap["Measurements"] = static_cast<float>(this->s.numMeas++);
             this->SensorResultMap["Status"] = static_cast<float>(this->s.zmod4xxx_status);
-            xSemaphoreGive(this->s.xMeasFlag);
+            
             DEBUG_PRINTLN(F("*********** Measurements ***********"));
 
             DEBUG_PRINT(F(" log_Rcda = "));
@@ -176,12 +176,11 @@ void AppSensor::sensorTask(void *pvParameters)
 
             lib_ret == IAQ_2ND_GEN_STABILIZATION ? this->s.isDataValid = false : this->s.isDataValid = true;
             this->SensorResultMap["Valid"] = static_cast<float>(this->s.isDataValid);
-
-            DEBUG_PRINTLN(uxTaskGetStackHighWaterMark(NULL));
         }
+        xSemaphoreGive(this->s.xMeasFlag);
         digitalWrite(LED_MEAS, LOW);
         /* wait 1.99 seconds before starting the next measurement */
-        vTaskDelay(1999 / portTICK_PERIOD_MS);
+        vTaskDelay(1999);
         digitalWrite(LED_MEAS, HIGH);
         /* start a new measurement before result calculation */
         api_ret = zmod4xxx_start_measurement(&(this->s.dev));

@@ -28,8 +28,7 @@ bool AppComms::isReady()
 {
     if (this->eth_if.prev_link_state > 5 && Ethernet.link() == 1)
     {
-        Ethernet.begin(this->eth_if.mac, this->eth_if.spi);
-       
+        NVIC_SystemReset();
     }
     Ethernet.link() == 1 ? this->eth_if.prev_link_state = 0 : this->eth_if.prev_link_state++;
     Ethernet.maintain();
@@ -45,6 +44,7 @@ int AppComms::connect(const char *host, uint16_t port)
 
 bool AppComms::sendAll(std::map<const char *, float> SensorResultMap, const char *db_id, const char *token)
 {
+    digitalWrite(LED_ERR, HIGH);
     if (Ethernet.link() == 1)
     {
         this->db.db_id = (char *)db_id;
@@ -81,6 +81,9 @@ bool AppComms::sendAll(std::map<const char *, float> SensorResultMap, const char
         {
             client.readBytes(resp, client.available());
             DEBUG_PRINTLN(resp);
+            client.flush();
+            client.clearWriteError();
+            digitalWrite(LED_ERR, LOW);
             return true;
         }
         DEBUG_PRINTLN("No response from server");

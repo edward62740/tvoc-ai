@@ -16,9 +16,8 @@ TFT_eSPI tft;
 AppDisplay display(&tft, LCD_BL);
 TaskHandle_t sensorTask;
 
-extern void HardFault_Handler(void);
-
-void HardFault_Handler(void)
+extern void Signal_Handler(void);
+void Signal_Handler(void)
 {
     NVIC_SystemReset();
 }
@@ -48,7 +47,7 @@ void mainTask(void *pvParameters)
     comms.connect(db_ip, db_port); // Blocking function to connect to influxdb
 
     /* Spawns a task to run sensor algorithms, should be yielded to by main task every 3s (+-) 5% for accuracy */
-    sensor.startSensorTask(sensorTask, (UBaseType_t)2);
+    sensor.startSensorTask(sensorTask, (UBaseType_t)1);
 
     for (;;)
     {
@@ -60,7 +59,7 @@ void mainTask(void *pvParameters)
         if(PIR_SENSOR_ENABLED) displaySleep(); //  Check if display state is appropriate
         digitalToggle(LED_ACT);
         comms.isReady() ? digitalWrite(LED_LINK, HIGH) : digitalWrite(LED_LINK, LOW);
-        vTaskDelay(20); // Give other tasks a chance to run
+        vTaskDelay(5); // Give other tasks a chance to run
     }
 }
 
